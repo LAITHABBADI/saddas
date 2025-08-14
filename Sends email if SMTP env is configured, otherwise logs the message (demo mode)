@@ -1,0 +1,39 @@
+import nodemailer from 'nodemailer';
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+
+  const { name, email, message } = req.body || {};
+  if (!name || !email || !message) return res.status(400).json({ ok: false, error: 'Missing fields' });
+
+  // If SMTP env configured, send email
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, CONTACT_TO } = process.env;
+
+  if (SMTP_HOST && SMTP_USER && SMTP_PASS && CONTACT_TO) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: parseInt(SMTP_PORT || '587', 10),
+        secure: false,
+        auth: { user: SMTP_USER, pass: SMTP_PASS }
+      });
+
+      await transporter.sendMail({
+        from: `"${name}" <${email}>`,
+        to: CONTACT_TO,
+        subject: `Contact form: ${name}`,
+        text: `Message from ${name} <${email}>\n\n${message}`,
+        html: `<p>Message from <strong>${name}</strong> &lt;${email}&gt;</p><pre>${message}</pre>`
+      });
+
+      return res.status(200).json({ ok: true });
+    } catch (err) {
+      console.error('SMTP send error', err);
+      return res.status(500).json({ ok: false, error: 'Failed to send email' });
+    }
+  }
+
+  // Demo mode: log to server and return ok
+  console.log('Contact received (demo):', { name, email, message });
+  return res.status(200).json({ ok: true, demo: true });
+}
