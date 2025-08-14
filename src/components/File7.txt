@@ -1,0 +1,7 @@
+---
+title: "First blog post"
+date: "2025-01-01"
+description: "An intro to my blog and what I'll write about."
+---
+
+Welcome to my blog! I'll write about web development, JavaScript, and design.
